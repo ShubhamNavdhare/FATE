@@ -35,7 +35,7 @@ class HomoLRArbiter(HomoLRBase):
         self.loss_history = []
         self.is_converged = False
         self.role = consts.ARBITER
-        self.aggregator = aggregator.Arbiter()
+        # self.aggregator = aggregator.Arbiter()
         self.model_weights = None
         self.cipher = paillier_cipher.Arbiter()
         self.host_predict_results = []
@@ -45,6 +45,9 @@ class HomoLRArbiter(HomoLRBase):
         self.cipher.register_paillier_cipher(self.transfer_variable)
 
     def fit(self, data_instances=None, validate_data=None):
+        self.aggregator = aggregator.Arbiter()
+        self.aggregator.register_aggregator(self.transfer_variable)
+
         host_ciphers = self.cipher.paillier_keygen(key_length=self.model_param.encrypt_param.key_length,
                                                    suffix=('fit',))
         host_has_no_cipher_ids = [idx for idx, cipher in host_ciphers.items() if cipher is None]
