@@ -479,10 +479,7 @@ class BaseDSLParser(object):
                            "component_module": component_module,
                            "component_need_run": {}}
 
-        if self.mode == "train":
-            runtime_conf = self.runtime_conf
-        else:
-            runtime_conf = self.pipeline_runtime_conf
+        runtime_conf = self.runtime_conf
 
         self.graph_dependency = {}
         for role in runtime_conf["role"]:
