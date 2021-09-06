@@ -11,14 +11,22 @@ import functools
 import pandas as pd
 import numpy as np
 
-from fate_arch import storage
-from fate_arch.common import WorkMode, Backend
 from fate_flow.utils import data_utils
 from fate_arch.session import Session
 from fate_arch.storage import StorageEngine
 from fate_test._config import Config
 
 sys.setrecursionlimit(1000000)
+
+
+def import_():
+    from fate_arch import storage
+    from fate_arch.common import WorkMode, Backend
+    from fate_arch.storage import EggRollStoreType
+    return storage, WorkMode, Backend, EggRollStoreType
+
+
+storage, WorkMode, Backend, EggRollStoreType = import_()
 
 
 class data_progress:
@@ -99,7 +107,7 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
                 output_data["id"] = id_encryption(encryption_type, section_data_size * batch + start_num,
                                                   section_data_size * (batch + 1) + start_num)
                 slicing_data_size = section_data_size
-            elif section_data_size * batch <= data_num:
+            elif section_data_size * batch < data_num:
                 output_data['id'] = id_encryption(encryption_type, section_data_size * batch + start_num, end_num)
                 slicing_data_size = data_num - section_data_size * batch
             else:
@@ -126,7 +134,7 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
                 df_data_1["id"] = id_encryption(encryption_type, section_data_size * batch + start_num,
                                                 section_data_size * (batch + 1) + start_num)
                 slicing_data_size = section_data_size
-            elif section_data_size * batch <= data_num:
+            elif section_data_size * batch < data_num:
                 df_data_1["id"] = id_encryption(encryption_type, section_data_size * batch + start_num, end_num)
                 slicing_data_size = data_num - section_data_size * batch
             else:
@@ -151,7 +159,7 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
                 output_data["id"] = id_encryption(encryption_type, section_data_size * batch + start_num,
                                                   section_data_size * (batch + 1) + start_num)
                 slicing_data_size = section_data_size
-            elif section_data_size * batch <= data_num:
+            elif section_data_size * batch < data_num:
                 output_data["id"] = id_encryption(encryption_type, section_data_size * batch + start_num, end_num)
                 slicing_data_size = data_num - section_data_size * batch
             else:
@@ -173,8 +181,7 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
         def expand_id_range(k, v):
             if label_flag:
                 return [(id_encryption(encryption_type, ids, ids + 1),
-                         ",".join([str(round(np.random.random()))] + [str(i) for i in
-                                                                      np.random.randint(-100, 100, size=int(v)) / 100]))
+                         ",".join([str(round(np.random.random()))] + [str(i) for i in np.random.random(6)]))
                         for ids in range(int(k), min(step + int(k), end_num))]
             else:
                 if data_type == 'tag':
@@ -185,13 +192,13 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
                             for ids in range(int(k), min(step + int(k), data_num))]
                 elif data_type == 'tag_value':
                     return [(id_encryption(encryption_type, ids, ids + 1), ",".join(
-                        [f"x{i}" + ':' + str(round(np.random.randn(), 2)) + ";" for i in
+                        [f"x{i}" + ':' + str(round(np.random.randn(), 6)) + ";" for i in
                          np.random.uniform(size=int(v))]))
                             for ids in range(int(k), min(step + int(k), data_num))]
                 elif data_type == 'dense':
-                    return [(id_encryption(encryption_type, ids, ids + 1),
-                             ",".join([str(i) for i in np.random.randint(-100, 100, size=int(v)) / 100]))
-                            for ids in range(int(k), min(step + int(k), data_num))]
+                    return [
+                        (id_encryption(encryption_type, ids, ids + 1), ",".join([str(i) for i in np.random.random(6)]))
+                        for ids in range(int(k), min(step + int(k), data_num))]
 
         table = table.flatMap(functools.partial(expand_id_range))
         if label_flag:
@@ -203,9 +210,8 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
             address_dict = {"name": table_name, "namespace": namespace}
             storage_engine = StorageEngine.STANDALONE
         elif work_mode == WorkMode.CLUSTER and backend == Backend.EGGROLL:
-            from fate_arch.storage import EggRollStorageType
             address_dict = {"name": table_name, "namespace": namespace,
-                            "storage_type": EggRollStorageType.ROLLPAIR_LMDB}
+                            "storage_type": EggRollStoreType.ROLLPAIR_LMDB}
             storage_engine = StorageEngine.EGGROLL
         elif work_mode == WorkMode.CLUSTER and backend == Backend.SPARK:
             address_dict = {"path": data_utils.default_output_fs_path(name=table_name, namespace=namespace,
@@ -229,7 +235,6 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
         table_meta.address = address
         table_meta.partitions = table.partitions
         table_meta.engine = storage_engine
-        table_meta.type = storage.EggRollStorageType.ROLLPAIR_LMDB
         table_meta.schema = save_schema
         table_meta.part_of_data = part_of_data
         table_meta.count = table_count
@@ -263,7 +268,7 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
     table_namespace_list = []
     for upload_dict in testsuite_config.get('data'):
         date_set[os.path.basename(upload_dict.get('file'))] = upload_dict.get('role')
-        table_name_list.append(upload_dict.get('name'))
+        table_name_list.append(upload_dict.get('table_name'))
         table_namespace_list.append(upload_dict.get('namespace'))
     data_count = 0
     for idx, data_name in enumerate(date_set.keys()):
