@@ -11,9 +11,6 @@ import functools
 import pandas as pd
 import numpy as np
 
-from fate_flow.utils import data_utils
-from fate_arch.session import Session
-from fate_arch.storage import StorageEngine
 from fate_test._config import Config
 
 sys.setrecursionlimit(1000000)
@@ -23,10 +20,14 @@ def import_():
     from fate_arch import storage
     from fate_arch.common import WorkMode, Backend
     from fate_arch.storage import EggRollStoreType
-    return storage, WorkMode, Backend, EggRollStoreType
+    from fate_flow.utils import data_utils
+    from fate_arch.session import Session
+    from fate_arch.storage import StorageEngine
+
+    return storage, WorkMode, Backend, EggRollStoreType, data_utils, Session, StorageEngine
 
 
-storage, WorkMode, Backend, EggRollStoreType = import_()
+storage, WorkMode, Backend, EggRollStoreType, data_utils, Session, StorageEngine = import_()
 
 
 class data_progress:
