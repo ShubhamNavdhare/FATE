@@ -21,10 +21,10 @@ install:
 
 script:
   - wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone_fate_master_1.5.1.tar.gz
-  - tar -xzf standalone_fate_master_1.5.1.tar.gz
-  - cd standalone_fate_master_1.5.1
+  - tar -xzf standalone_fate_master_1.6.1.tar.gz
+  - cd standalone_fate_master_1.6.1
   - sed -i.bak "s/sh  service.sh/bash service.sh/g" init.sh
-  - sh init.sh init
+  - bash init.sh init
   - ls -alh
   - source bin/init_env.sh
   - bash ./python/federatedml/test/run_test.sh
